@@ -1,6 +1,7 @@
 import copy
 import json
 import argparse
+import requests
 
 existing_query = {
     "query": {
@@ -171,19 +172,74 @@ def add_values_to_query(existing_query,uniprot_id, pfam_id ,values_to_add):
 
     return new_query
 
+def parse_candidate_file(file_path):
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+    
+    candidates = []
+    for line in lines:
+        tokens = line.strip().split()
+        uniprot_id, pfam_id, *values_to_add = tokens
+        candidates.append((uniprot_id, pfam_id, values_to_add))
+    
+    return candidates
+
+def get_pdb_code(updated_query):
+    url = "https://search.rcsb.org/rcsbsearch/v2/query"
+    
+    request_options = updated_query["request_options"]
+    query = updated_query["query"]
+    return_type = updated_query["return_type"]
+    payload = {
+        "query": query,
+        "return_type": return_type,
+        "request_options": request_options
+    }
+    
+
+    response = requests.post(url, json=payload)
+    if response.status_code == 200:
+    # Parse the JSON response
+        data = json.loads(response.text)
+        for hit in data["result_set"]:
+            pdb_id = hit["identifier"]
+            print(pdb_id)
+
+        # Write pdb_id to a file if status.code is 200
+            with open("pdb_id.txt", "a") as file:
+                file.write(pdb_id + "\n")
+    else:
+        print("Error:", response.status_code)
+
+
 def main():
     # Argument parser
     parser = argparse.ArgumentParser(description="Add values to an existing query.")
-    parser.add_argument("uniprot_id", help="UniProt identifier (e.g., P00918)")
-    parser.add_argument("pfam_id", help="Pfam identifier (e.g., PF00194)")
-    parser.add_argument("values_to_add", nargs="+", help="Values to add (e.g., CHEMBL578165 CHEMBL573209)")
+    parser.add_argument("--file", help="Path to the file containing candidate_list.txt")
+    parser.add_argument("uniprot_id", nargs="?", help="UniProt identifier (e.g., P00918)")
+    parser.add_argument("pfam_id", nargs="?", help="Pfam identifier (e.g., PF00194)")
+    parser.add_argument("values_to_add", nargs="*", help="Values to add (e.g., CHEMBL578165 CHEMBL573209)")
     args = parser.parse_args()
-    # Call the function to add values to the existing query
-    updated_query = add_values_to_query(existing_query, args.uniprot_id, args.pfam_id ,args.values_to_add)
 
+    # Evaluates if args file is present or if arguments were provided
+    if args.file:
+        candidates = parse_candidate_file(args.file)
+        for candidate in candidates:
+            uniprot_id, pfam_id, values_to_add = candidate
+            updated_query = add_values_to_query(existing_query, uniprot_id, pfam_id, values_to_add)
+            get_pdb_code(updated_query)
 
-    # Print the updated query
-    print(json.dumps(updated_query, indent=2))
+            # Save the final query
+            with open("updated_query.json", "w") as f:
+                f.write(json.dumps(updated_query, indent=2))
+            
+    elif args.uniprot_id and args.pfam_id and args.values_to_add:
+        # Use the provided command-line arguments
+        updated_query = add_values_to_query(existing_query, args.uniprot_id, args.pfam_id, args.values_to_add)
+        get_pdb_code(updated_query)
+    else:
+        parser.error("Either provide --file or uniprot_id, pfam_id, and values_to_add.")
+
 
 if __name__ == "__main__":
     main()
