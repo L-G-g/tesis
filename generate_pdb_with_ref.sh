@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+
+
 # Check if Open Babel is installed
 if ! command -v obabel &> /dev/null; then
     echo "Error: Open Babel is not installed. Please install it before running this script."
@@ -12,6 +15,8 @@ if [ "$#" -ne 3 ]; then
     exit 1
 fi
 
+
+
 # Assign arguments to variables
 smiles="$1"
 ChemBL="$2"
@@ -22,13 +27,28 @@ receptor="${r}.pdb"
 receptor_pdbqt="${receptor}qt"
 r_maps_fld="${r}.maps.fld"
 
+# Creates the directory
+mkdir -p ""$ChemBL"_"$r""
+cd ""$ChemBL"_"$r""
+
+# Downloading the PDB file
+wget -O "./$receptor" "https://files.rcsb.org/download/$receptor"
+
+# Checking if download was successful
+if [ $? -eq 0 ]; then
+    echo "Download successful: $receptor is saved in the current working directory"
+else
+    echo "Download failed. Please verify the PDB code and try again."
+fi
+
+
 # Create directory if it doesn't exist
 #output_dir="$r"
 #mkdir -p "$output_dir"
 output_dir=$(pwd)
 
 # Run ligand extraction script
-python3 ligand_extraction.py $output_dir --pdb $receptor &> /dev/null
+python3 ../ligand_extraction.py $output_dir --pdb $receptor &> /dev/null
 
 # Move ligand files to output directory
 #mv lig_*.pdb "$output_dir"
@@ -78,7 +98,7 @@ fi
 
 # Run the pdbqt transformation and write a random state for the estructural ligand
 pythonsh /home/gabi/tools/mgltools_x86_64Linux2_1.5.7/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l "$pdb" -o "$pdbqt" &> /dev/null
-pythonsh /home/gabi/tools/mgltools_x86_64Linux2_1.5.7/MGLToolsPckgs/AutoDockTools/Utilities24/write_random_state_ligand.py -l "$pdbqt" -o "$pdbqt" &> /dev/null
+pythonsh /home/gabi/tools/mgltools_x86_64Linux2_1.5.7/MGLToolsPckgs/AutoDockTools/Utilities24/write_random_state_ligand.py -l "$pdbqt" -o ligando_dock.pdbqt &> /dev/null
 
 # Check if the conversion was successful
 if [ $? -eq 0 ]; then
@@ -148,4 +168,4 @@ else
 fi
 
 # Run the
-autodock_gpu_64wi -ffile $r_maps_fld -lfile ligando_dock.pdbqt -nrun 100
+autodock_gpu_64wi -ffile $r_maps_fld -lfile ligando_dock.pdbqt -nrun 100 -gbest 1
