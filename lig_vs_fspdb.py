@@ -31,7 +31,6 @@ def main(csv_file):
     for name,smile in name_smile:
         for pdb in pdbs:
             path_to_check = os.path.join(cwd, name + "_" + pdb)
-            print(path_to_check)
             if not os.path.exists(path_to_check):
                 run_autodock_protocol(smile, name, pdb)
             

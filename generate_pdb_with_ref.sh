@@ -78,7 +78,6 @@ ligand_pdbqt=$(basename "$ligand_pdbqt_full")
 # Run the pdbqt transformation for the estructural ligand
 pythonsh /home/gabi/tools/mgltools_x86_64Linux2_1.5.7/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -A hidrogens -l "$ligand_file" -o "$ligand_pdbqt" &> /dev/null
 
-
 # Check if the conversion was successful
 if [ $? -eq 0 ]; then
     echo "Estructural ligand conversion successful. Output saved to $ligand_pdbqt."
@@ -96,15 +95,24 @@ else
     echo "Error during conversion. Please the new ligand and try again."
 fi
 
-# Run the pdbqt transformation and write a random state for the estructural ligand
+# Run the pdbqt transformation for the estructural ligand
 pythonsh /home/gabi/tools/mgltools_x86_64Linux2_1.5.7/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -l "$pdb" -o "$pdbqt" &> /dev/null
-pythonsh /home/gabi/tools/mgltools_x86_64Linux2_1.5.7/MGLToolsPckgs/AutoDockTools/Utilities24/write_random_state_ligand.py -l "$pdbqt" -o ligando_dock.pdbqt &> /dev/null
 
 # Check if the conversion was successful
 if [ $? -eq 0 ]; then
     echo "New ligand pdbqt conversion successful. Output saved to $pdbqt"
 else
     echo "Error during conversion. Please the new ligand and try again."
+fi
+
+# Ron the random state transformation for the scructural ligand
+pythonsh /home/gabi/tools/mgltools_x86_64Linux2_1.5.7/MGLToolsPckgs/AutoDockTools/Utilities24/write_random_state_ligand.py -l "$pdbqt" -o ligando_dock.pdbqt &> /dev/null
+
+# Check if the conversion was successful
+if [ $? -eq 0 ]; then
+    echo "Succesful random state transformation. Output saved to $pdbqt"
+else
+    echo "Unsuccesful random state transformation"
 fi
 
 # Run the receptor transformation, if needed it takes the first conformation.
