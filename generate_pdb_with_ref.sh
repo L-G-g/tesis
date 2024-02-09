@@ -76,13 +76,14 @@ ligand_pdbqt_full="${ligand_file%.*}.pdbqt"
 ligand_pdbqt=$(basename "$ligand_pdbqt_full")
 
 # Run the pdbqt transformation for the estructural ligand
-pythonsh /home/gabi/tools/mgltools_x86_64Linux2_1.5.7/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -A hidrogens -l "$ligand_file" -o "$ligand_pdbqt" &> /dev/null
+output_estructural_pdbqt=$(pythonsh /home/gabi/tools/mgltools_x86_64Linux2_1.5.7/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py -A hidrogens -l "$ligand_file" -o "$ligand_pdbqt" 2>&1)
 
 # Check if the conversion was successful
 if [ $? -eq 0 ]; then
     echo "Estructural ligand conversion successful. Output saved to $ligand_pdbqt."
 else
-    echo "Error during conversion. Please check the estructural ligand and try again."
+    warning_message=$(echo "$output_estructural_pdbqt" | grep "WARNING:")
+    echo "$warning_message"
 fi
 
 # Run Open Babel command
@@ -137,13 +138,14 @@ else
 fi
 
 # Prepare a gfp with the estructural ligand to extract the gridcenter
-pythonsh /home/gabi/tools/mgltools_x86_64Linux2_1.5.7/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_gpf4.py -y -l $ligand_pdbqt -r $receptor_pdbqt -o receptor_coordenadas.gpf &> /dev/null
+output_gpf=$(pythonsh /home/gabi/tools/mgltools_x86_64Linux2_1.5.7/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_gpf4.py -y -l $ligand_pdbqt -r $receptor_pdbqt -o receptor_coordenadas.gpf 2>&1)
 
 # Check if the conversion was successful
 if [ $? -eq 0 ]; then
-    echo "Estructural gpf saved in receptor_coordenadas.gpf, ready to extract coordinates"
+    echo "Estructural ligand conversion successful. Output saved to $ligand_pdbqt."
 else
-    echo "Error during estructural gpf. Wrong coordinates will be used."
+    warning_message=$(echo "$output_gpf")
+    echo "$warning_message"
 fi
 
 # Run grep command to find the line containing "gridcenter"
